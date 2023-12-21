@@ -7,7 +7,18 @@ on:
     branches: [ "main" ]
 
 jobs:
+  prepare:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        repository: RG-Systems/vite-project-cdk
+        ref: main
+
   infra:
+    needs: prepare
+
     permissions:
       id-token: write
       contents: read
@@ -16,7 +27,6 @@ jobs:
     with:
       commit: ${{ github.sha }}
       environment: "qa"
-
 
   build:
     needs: infra
