@@ -8,13 +8,11 @@ on:
 
 jobs:
   infra:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: RG-Systems/vite-project-cdk/.github/workflows/deploy.yml@main
-        with:
-          commit: ${{ github.sha }}
-          environment: "qa"
+    uses: RG-Systems/vite-project-cdk/.github/workflows/deploy.yml@main
+    with:
+      commit: ${{ github.sha }}
+      environment: "qa"
+
 
   build:
     needs: infra
