@@ -1,15 +1,23 @@
-# This workflow will do a clean installation of node dependencies, cache/restore them, build the source code and run tests across different versions of node
-# For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-nodejs
-
 name: Main branch changes workflow
+
+concurrency: main
 
 on:
   push:
     branches: [ "main" ]
 
 jobs:
-  build:
+  infra:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: RG-Systems/vite-project-cdk/.github/workflows/deploy.yml@main
+        with:
+          commit: ${{ github.sha }}
+          environment: "qa"
 
+  build:
+    needs: infra
     runs-on: ubuntu-latest
 
     steps:
@@ -21,3 +29,26 @@ jobs:
         cache: 'yarn'
     - run: yarn install --frozen-lockfile
     - run: yarn build
+
+  deploy:
+    needs:
+      - build
+      - infra
+
+    environment:
+      name: qa
+      url: ${{ needs.infra.outputs.url }}
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::503479554940:role/RG-Systems-GH-Actions
+          role-session-name: vp-cdk-deploy
+          aws-region: us-east-1
+      - run: |
+          aws s3 sync ./dist s3://${{ needs.infra.outputs.bucket }}/${{ github.sha }}
+          aws cloudfront create-invalidation --distribution-id ${{ needs.infra.outputs.id }} --paths "/*"
+
