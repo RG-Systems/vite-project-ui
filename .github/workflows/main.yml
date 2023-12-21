@@ -8,6 +8,10 @@ on:
 
 jobs:
   infra:
+    permissions:
+      id-token: write
+      contents: read
+
     uses: RG-Systems/vite-project-cdk/.github/workflows/deploy.yml@main
     with:
       commit: ${{ github.sha }}
